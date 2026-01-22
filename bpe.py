@@ -43,7 +43,7 @@ def merge_pairs(corpus, pair_freq):
     for word in corpus: 
         new_word = []
         i = 0
-        while i < len(word) - 1: 
+        while i < len(word): 
             if i < len(word) - 1 and (word[i], word[i+1]) == pair_to_merge: 
                 merged_token = word[i] + word[i+1]
                 new_word.append(merged_token)
@@ -55,9 +55,10 @@ def merge_pairs(corpus, pair_freq):
     return new_corpus, pair_to_merge 
 
 
-def train(target, text): 
+def train(text, target = 100): 
     corpus = get_corpus(text)
     # Building the vocab - init stage
+    merge_rules = []
     vocab = set()
     for word in corpus: 
         for char in word: 
@@ -74,19 +75,39 @@ def train(target, text):
         # Add merged token to vocab
         merged_token = pair_to_merge[0] + pair_to_merge[1]
         vocab.add(merged_token)
+        merge_rules.append(pair_to_merge)
 
         print(f"Merged {pair_to_merge} → vocab size: {len(vocab)}")
     
     print(f"\nFinal vocab :: {sorted(vocab)}")
-    print(f"\nFinal Corpus :: {corpus}")
+    print(f"\nFinal Corpus :: {corpus}")    
+
+    vocab_to_id = {token : idx for idx, token in enumerate(sorted(vocab))}
+    return vocab, merge_rules, vocab_to_id, corpus
+
+
+def encode(text, merge_rules, vocab_to_id): 
+    """
+    Encode text into token IDs, using learned merge rules
+    """
+    vocab, merge_rules, vocab_to_id, corpus = train(text=text)
+    token_ids = []
+    for word in corpus: 
+        for token in word: 
+            if token in vocab_to_id: 
+                token_ids.append(vocab_to_id[token])
+            else: 
+                #Handle unknown tokens
+                token_ids.append(vocab_to_id.get("<UNK>", 0))
+    return token_ids, corpus
 
 
 
 
 if __name__ == "__main__": 
-    target = 100
+    target = 30
     text = "The penguin started heading towards the mountains; some 70 kms away"
-    train(target, text)
+    # train(target, text)
     # corpus = get_corpus("The penguin started heading towards the mountains; some 70 kms away")
     # # print(f"CORPUS :: {corpus}\n")
     # pair_freq = get_pair_counts(corpus)
