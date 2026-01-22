@@ -1,12 +1,24 @@
+import re
+
+def tokenize(text):
+    # words OR single punctuation symbols
+    return re.findall(r"\w+|[^\w\s]", text)
+
+
 def get_corpus(text):
     """
     takes in the text, 
     returns the corpus with which we play ahead
     """
-    words = text.split(" ")
+    text = text.lower()
+    tokens = tokenize(text)
+
     corpus = []
-    for word in words: 
-        char_list = list(word)
+    for tok in tokens: 
+        if tok.isalnum(): 
+            char_list = list(tok)
+        else: 
+            char_list = [tok] # punctuation is atomic
         char_list.append('</w>')
         corpus.append(char_list)
     return corpus
@@ -22,6 +34,8 @@ def get_pair_counts(corpus):
     for word in corpus: 
         # print(f"\nWord in the method: {word}\n")
         for i in range(len(word)-1): 
+            if word == '</w>': 
+                continue
             pair = (word[i], word[i+1]) 
             counts[pair] = counts.get(pair, 0) + 1
             # print(f"Counts :: {counts}")
@@ -34,7 +48,12 @@ def merge_pairs(corpus, pair_freq):
     returns the updated corpus
     """
 
-    pair_to_merge = max(pair_freq, key=pair_freq.get) 
+    # pair_to_merge = max(pair_freq, key=pair_freq.get) 
+    pair_to_merge = sorted(
+        pair_freq.items(),
+        key=lambda x: (-x[1], x[0])
+    )[0][0]
+
     new_corpus = []
     for word in corpus: 
         new_word = []
@@ -71,7 +90,8 @@ def train(text, target = 100):
 
         # Add merged token to vocab
         merged_token = pair_to_merge[0] + pair_to_merge[1]
-        vocab.add(merged_token)
+        if '</w>' not in merged_token: 
+            vocab.add(merged_token)
         merge_rules.append(pair_to_merge)
 
         print(f"Merged {pair_to_merge} → vocab size: {len(vocab)}")
@@ -134,20 +154,32 @@ def decode(token_ids, vocab_to_id):
 
 
 if __name__ == "__main__": 
-    target = 80
+    target = 15
+    # text = "mountain"
+        # "mountains"
+        # "mountainous"
+        # "mountain-like"
+        # "Mountain"
+        # "MOUNTAIN"
+    
     text = "The penguin started heading towards the mountains; some 70 kms away"
     # Train once: 
-    voca, merge_rules, vocab_to_id, corpus = train(text, target)
+    text = text.lower()
+    vocab, merge_rules, vocab_to_id, corpus = train(text, target)
 
     print(f"\nEncoding NEW TEXT\n")
 
     # Now encode new text using the learned rules: 
     new_text = "penguin heading towards the mountains, for a purpose"
+    # new_text = "mountain-like"
     token_ids, encoded_corpus = encode(new_text, merge_rules, vocab_to_id)
-
+    print(f"\nNew text: {new_text}\n")
+    print(f"\nEncoded tokens: {encoded_corpus}\n")
+    print(f"\nToken IDs: {token_ids}\n")
     print(f"\n Decoding token id to string\n")
     text = decode(token_ids, vocab_to_id)
     print(text)
-    # print(f"\nNew text: {new_text}\n")
-    # print(f"\nEncoded tokens: {encoded_corpus}\n")
-    # print(f"\nToken IDs: {token_ids}\n")
+
+# Right now, this BPE is using python characters. 
+# What happens with emojis? Accents? Hindi text? Mixed scripts? 
+# Thats why GPT-style tokenizers use
