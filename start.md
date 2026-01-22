@@ -20,3 +20,11 @@ Random init + inspect cosine similarity
 Output: 
 1. nearest neighbors of a token
 2. before vs after training
+
+
+text
+→ characters
+→ subword merges (ordered)
+→ token ids
+→ tokens
+→ text
