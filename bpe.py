@@ -116,8 +116,25 @@ def encode(text, merge_rules, vocab_to_id):
     return token_ids, corpus
 
 
+def decode(token_ids, vocab_to_id): 
+    tokens = [] 
+    id_to_vocab = {idx : token for token, idx in vocab_to_id.items()}
+    for token_id in token_ids: 
+        if token_id in id_to_vocab:
+            tokens.append(id_to_vocab.get(token_id))
+        else: 
+            tokens.append('<UNK>')
+    print(f"TOKENS :: {tokens}") 
+
+    text = ''.join(tokens)
+    text = text.replace('</w>', ' ')
+    text = text.strip()
+    print(f"\nTEXT DECODED : {text}\n")
+    return text
+
+
 if __name__ == "__main__": 
-    target = 100
+    target = 80
     text = "The penguin started heading towards the mountains; some 70 kms away"
     # Train once: 
     voca, merge_rules, vocab_to_id, corpus = train(text, target)
@@ -128,6 +145,9 @@ if __name__ == "__main__":
     new_text = "penguin heading towards the mountains, for a purpose"
     token_ids, encoded_corpus = encode(new_text, merge_rules, vocab_to_id)
 
-    print(f"\nNew text: {new_text}\n")
-    print(f"\nEncoded tokens: {encoded_corpus}\n")
-    print(f"\nToken IDs: {token_ids}\n")
+    print(f"\n Decoding token id to string\n")
+    text = decode(token_ids, vocab_to_id)
+    print(text)
+    # print(f"\nNew text: {new_text}\n")
+    # print(f"\nEncoded tokens: {encoded_corpus}\n")
+    # print(f"\nToken IDs: {token_ids}\n")
