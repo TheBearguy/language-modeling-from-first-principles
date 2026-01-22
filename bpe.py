@@ -2,6 +2,9 @@
 # get_pair_counts()
 
 
+from statistics import median_grouped
+
+
 def get_corpus(text):
     """
     takes in the text, 
@@ -54,7 +57,7 @@ def merge_pairs(corpus, pair_freq):
         new_corpus.append(new_word)
     return new_corpus, pair_to_merge 
 
-
+# Training learns merge rules from the given training data
 def train(text, target = 100): 
     corpus = get_corpus(text)
     # Building the vocab - init stage
@@ -85,12 +88,29 @@ def train(text, target = 100):
     vocab_to_id = {token : idx for idx, token in enumerate(sorted(vocab))}
     return vocab, merge_rules, vocab_to_id, corpus
 
-
+# Encoding, applies the learned merge_rules to the text
 def encode(text, merge_rules, vocab_to_id): 
     """
     Encode text into token IDs, using learned merge rules
     """
-    vocab, merge_rules, vocab_to_id, corpus = train(text=text)
+    corpus = get_corpus(text)
+
+    for pair_to_merge in merge_rules: 
+        new_corpus = []
+        for word in corpus: 
+            new_word = []
+            i = 0
+            while i < len(word): 
+                if i < len(word) -1 and (word[i], word[i+1]) == pair_to_merge: 
+                    merged_token = word[i] + word[i+1]
+                    new_word.append(merged_token)
+                    i += 2
+                else: 
+                    new_word.append(word[i])
+                    i += 1
+            new_corpus.append(new_word)
+        corpus = new_corpus
+
     token_ids = []
     for word in corpus: 
         for token in word: 
@@ -105,13 +125,17 @@ def encode(text, merge_rules, vocab_to_id):
 
 
 if __name__ == "__main__": 
-    target = 30
+    target = 100
     text = "The penguin started heading towards the mountains; some 70 kms away"
-    # train(target, text)
-    # corpus = get_corpus("The penguin started heading towards the mountains; some 70 kms away")
-    # # print(f"CORPUS :: {corpus}\n")
-    # pair_freq = get_pair_counts(corpus)
-    # # print(f"\npairs = {pair_freq}\n")
-    # # print(f"\nPAIRS Frequency :: {pair_freq}\n")
-    # new_corpus = merge_pairs(corpus, pair_freq)
-    # print(f"\nNEW CORPUS :: {new_corpus}\n")
+    # Train once: 
+    voca, merge_rules, vocab_to_id, corpus = train(text, target)
+
+    print(f"\nEncoding NEW TEXT\n")
+
+    # Now encode new text using the learned rules: 
+    new_text = "penguin heading towards the mountains, for a purpose"
+    token_ids, encoded_corpus = encode(new_text, merge_rules, vocab_to_id)
+
+    print(f"\nNew text: {new_text}\n")
+    print(f"\nEncoded tokens: {encoded_corpus}\n")
+    print(f"\nToken IDs: {token_ids}\n")
