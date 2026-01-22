@@ -1,10 +1,3 @@
-# compute_char_freq()
-# get_pair_counts()
-
-
-from statistics import median_grouped
-
-
 def get_corpus(text):
     """
     takes in the text, 
@@ -63,6 +56,7 @@ def train(text, target = 100):
     # Building the vocab - init stage
     merge_rules = []
     vocab = set()
+    vocab.add('<UNK>')  # Add unknown token
     for word in corpus: 
         for char in word: 
             vocab.add(char)
@@ -120,8 +114,6 @@ def encode(text, merge_rules, vocab_to_id):
                 #Handle unknown tokens
                 token_ids.append(vocab_to_id.get("<UNK>", 0))
     return token_ids, corpus
-
-
 
 
 if __name__ == "__main__": 
