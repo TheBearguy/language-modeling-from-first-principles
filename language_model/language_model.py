@@ -1,6 +1,6 @@
 import numpy as np
 
-from bpe import vocab, vocab_to_id, text, merge_rules
+from bpe.bpe import vocab, vocab_to_id, text, merge_rules
 
 
 def init_lm_params(vocab_size, dim, seed = 42): 

@@ -1,7 +1,5 @@
 import numpy as np
-from bpe import encode, merge_rules, text, vocab_to_id
-
-from bpe import vocab
+from bpe.bpe import encode, merge_rules, text, vocab_to_id
 
 def build_skipgram_pairs(token_ids, window_size = 2): 
     pairs = []
