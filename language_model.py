@@ -1,6 +1,8 @@
 from syslog import LOG_SYSLOG
 import numpy as np
 
+from bpe import vocab, vocab_to_id
+
 
 def init_lm_params(vocab_size, dim, seed = 42): 
     rng = np.random.default_rng(seed)
@@ -38,3 +40,36 @@ def lm_steps(E, W, prefix_ids, target_id, lr):
     for t in prefix_ids: 
         E[t] = E[t] - lr * gradient_per_token
     return loss
+
+def train_language_model(
+    token_ids,
+    vocab_size,
+    dim=32,
+    lr=0.05,
+    epochs=10
+):
+    E, W = init_lm_params(vocab_size, dim)
+
+    for epoch in range(epochs):
+        total_loss = 0.0
+
+        for i in range(1, len(token_ids)):
+            prefix = token_ids[:i]
+            target = token_ids[i]
+            loss = lm_step(E, W, prefix, target, lr)
+            total_loss += loss
+
+        print(f"epoch {epoch+1}, loss {total_loss:.4f}")
+
+    return E, W
+
+
+if __name__ == "__main__": 
+    token_ids, _ = (text, merge_rules, vocab_to_id)
+
+E, W = train_language_model(
+    token_ids,
+    vocab_size=len(vocab_to_id),
+    dim=32,
+    epochs=20
+)
