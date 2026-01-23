@@ -1,7 +1,6 @@
-from syslog import LOG_SYSLOG
 import numpy as np
 
-from bpe import vocab, vocab_to_id
+from bpe import vocab, vocab_to_id, text, merge_rules
 
 
 def init_lm_params(vocab_size, dim, seed = 42): 
@@ -56,7 +55,7 @@ def train_language_model(
         for i in range(1, len(token_ids)):
             prefix = token_ids[:i]
             target = token_ids[i]
-            loss = lm_step(E, W, prefix, target, lr)
+            loss = lm_steps(E, W, prefix, target, lr)
             total_loss += loss
 
         print(f"epoch {epoch+1}, loss {total_loss:.4f}")
