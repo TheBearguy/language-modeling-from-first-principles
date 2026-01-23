@@ -1,5 +1,7 @@
 import numpy as np
 
+from bpe import vocab
+
 def build_skipgram_pairs(token_ids, window_size = 2): 
     pairs = []
     n = len(token_ids)
@@ -45,3 +47,25 @@ def skipgram_step(E, O, negatives, center, context, lr):
         p_n = sigmoid(score_n)
         E[center] = E[center] - lr * p_n * v_n  
         O[context] = O[context] - lr * p_n * v_w
+
+
+def train_skipgram(
+    token_ids, 
+    vocab_size, 
+    dim = 32, 
+    window_size = 2, 
+    neg_samples = 5, 
+    lr = 0.05, 
+    epochs = 10
+): 
+    E, O = init_embeddings(vocab_size, dim)
+    pairs = build_skipgram_pairs(token_ids, window_size)
+
+    for epoch in range(epochs): 
+        np.random.shuffle(pairs)
+
+        for center, context in pairs: 
+            negatives = samples_negative(vocab_size, neg_samples)
+            skipgram_step(E, O, negatives, center, context, lr)
+        print(f"\nepoch {epoch + 1} complete")
+    return E
