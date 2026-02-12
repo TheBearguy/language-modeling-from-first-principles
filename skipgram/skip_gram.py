@@ -1,5 +1,5 @@
 import numpy as np
-from bpe.bpe import encode, merge_rules, text, vocab_to_id
+from bpe import train, encode
 
 def build_skipgram_pairs(token_ids, window_size = 2): 
     pairs = []
@@ -68,11 +68,3 @@ def train_skipgram(
             skipgram_step(E, O, negatives, center, context, lr)
         print(f"\nepoch {epoch + 1} complete")
     return E
-
-if __name__ == "__main__": 
-    token_ids, _ = encode(text, merge_rules, vocab_to_id)
-    E = train_skipgram(
-        token_ids, 
-        vocab_size = len(vocab_to_id), 
-        dim=32
-    )
