@@ -1,7 +1,7 @@
 from math import tanh
-from bpe.bpe import train, encode
+from bpe import train, encode
 import numpy as np
-from language_model.language_model import softmax
+from language_model import softmax
 
 def init_rnn_params(vocab_size, dim, seed=42):
     rng = np.random.default_rng(seed)
@@ -33,7 +33,7 @@ def init_sinusoidal_positions(max_len, dim):
     return P
 
 
-def rnn_lm_forward(E, W_x, W_h, W_o, token_ids): 
+def rnn_lm_forward(E, W_x, W_h, W_o, P, token_ids): 
     dim = W_h.shape[0]
     h_prev = np.zeros(dim)
 
@@ -41,7 +41,7 @@ def rnn_lm_forward(E, W_x, W_h, W_o, token_ids):
     xs = [] # store inputs (for later backpropogation)
     ps = [] 
 
-    for i, token_id in enumerate(token_ids): 
+    for i, token_id in enumerate(token_ids[:-1]): 
         x = E[token_id] + P[i]
         h = np.tanh(W_h @ h_prev + W_x @ x)
 
@@ -53,7 +53,7 @@ def rnn_lm_forward(E, W_x, W_h, W_o, token_ids):
         ps.append(p)
 
         h_prev = h
-    return xs, hs
+    return xs, hs, ps
     
 
 def rnn_lm_backward(
@@ -125,55 +125,3 @@ def train_rnn_language_model(
 
     return E, W_x, W_h, W_o, P 
 
-
-if __name__ == "__main__":
-    text = (
-        "the cat sat on the mat "
-        "the dog sat on the log "
-        "the cat chased the dog "
-    )
-
-    # 2. Train BPE (once)
-    vocab, merge_rules, vocab_to_id, _ = train(text, target=50)
-    token_ids, _ = encode(text, merge_rules, vocab_to_id)
-
-    print("Vocab size:", len(vocab_to_id))
-    print("Token IDs:", token_ids)
-
-    # 3. RNN LM hyperparameters
-    dim = 32
-    lr = 0.05
-    epochs = 20
-    max_len = len(token_ids)
-
-    # 4. Train RNN LM (LEARNED positions)
-    print("\nTraining RNN LM with LEARNED positional embeddings\n")
-
-    E, W_x, W_h, W_o, P = train_rnn_language_model(
-        token_ids=token_ids,
-        vocab_size=len(vocab_to_id),
-        dim=dim,
-        max_len=max_len,
-        lr=lr,
-        epochs=epochs,
-        positional_mode="learned"
-    )
-
-    # 5. sanity check: predict next token
-    def predict_next_rnn(E, W_x, W_h, W_o, P, prefix_ids):
-        h = np.zeros(W_h.shape[0])
-
-        for i, t in enumerate(prefix_ids):
-            x = E[t] + P[i]
-            h = np.tanh(W_h @ h + W_x @ x)
-
-        probs = softmax(h @ W_o)
-        return np.argmax(probs)
-
-    id_to_vocab = {i: t for t, i in vocab_to_id.items()}
-
-    prefix = token_ids[:5]
-    pred_id = predict_next_rnn(E, W_x, W_h, W_o, P, prefix)
-
-    print("\nPrefix token IDs:", prefix)
-    print("Predicted next token:", id_to_vocab[pred_id])
