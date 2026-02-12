@@ -73,35 +73,3 @@ def train_language_model(
 #     epochs=20
 # )
 
-
-if __name__ == "__main__":
-    # pretend vocabulary of size 5
-    vocab_size = 5
-
-    # fake token sequence (already tokenized)
-    token_ids = [0, 1, 2, 3, 1, 4, 2, 3, 0]
-
-    # model hyperparameters
-    dim = 8
-    max_len = len(token_ids)
-    lr = 0.05
-    epochs = 5
-
-    print("Running standalone language_model sanity check")
-    print("Token IDs:", token_ids)
-
-    # Train with learned positions
-    E, W, P = train_language_model(
-        token_ids=token_ids,
-        vocab_size=vocab_size,
-        dim=dim,
-        max_len=max_len,
-        lr=lr,
-        epochs=epochs,
-        positional_mode="learned"
-    )
-
-    print("\nSanity check complete.")
-    print("Embedding matrix shape:", E.shape)
-    print("Output matrix shape:", W.shape)
-    print("Position matrix shape:", P.shape)
