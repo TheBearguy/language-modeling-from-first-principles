@@ -1,6 +1,6 @@
 import numpy as np
-from bpe.bpe import encode, train
-from language_model.language_model import init_lm_params, softmax
+from bpe import train, encode
+from language_model import init_lm_params, softmax
 
 def init_learned_positions(max_len, dim, seed=42): 
     rng = np.random.default_rng(seed)
