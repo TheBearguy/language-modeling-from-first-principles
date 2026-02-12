@@ -6,17 +6,17 @@ from language_model import softmax
 def init_rnn_params(vocab_size, dim, seed=42):
     rng = np.random.default_rng(seed)
 
-    E = rng.normal(0, 0.01, size=(vocab_size, dim))
-    W_x = rng.normal(0, 0.01, size=(dim, dim))
-    W_h = rng.normal(0, 0.01, size=(dim, dim))
-    W_o = rng.normal(0, 0.01, size=(dim, vocab_size))
+    E = rng.normal(0, 0.01, size=(vocab_size, dim)) # Embedding matrix -> maps token_id to vector
+    W_x = rng.normal(0, 0.01, size=(dim, dim)) # Input weight matrix - transforms current input vector into hidden state space
+    W_h = rng.normal(0, 0.01, size=(dim, dim)) # recurrent weight matrix - carries memory from previous timestep.
+    W_o = rng.normal(0, 0.01, size=(dim, vocab_size)) # output weight matrix - converts hidden state space to logits vocabulary
 
     return E, W_x, W_h, W_o
 
 
 def init_learned_positions(max_len, dim, seed=42):
     rng = np.random.default_rng(seed)
-    P = rng.normal(0, 0.01, size=(max_len, dim))
+    P = rng.normal(0, 0.01, size=(max_len, dim)) # Positional encoding
     return P
 
 
@@ -43,11 +43,13 @@ def rnn_lm_forward(E, W_x, W_h, W_o, P, token_ids):
 
     for i, token_id in enumerate(token_ids[:-1]): 
         x = E[token_id] + P[i]
-        h = np.tanh(W_h @ h_prev + W_x @ x)
+        h = np.tanh(W_h @ h_prev + W_x @ x) # Compute hidden state
+        # This takes previous memory; add current input; pass through tanh nonlinearity.
+        # This creates a new memory state
 
-        logits = h @ W_o
+        logits = h @ W_o # Computing outptu probabilities.
         p = softmax(logits)
-
+        # Store all values for backprop
         xs.append(x)
         hs.append(h)
         ps.append(p)
@@ -81,6 +83,7 @@ def rnn_lm_backward(
         dtanh = dh * (1 - hs[i] ** 2)
 
         # Update recurrent weights: 
+        # This affects how input affects memory  and memory is carried forward.
         W_x = W_x - lr * np.outer(dtanh, xs[i])
         W_h = W_h - lr * np.outer(dtanh, hs[i-1] if i>0 else 0)
 
@@ -90,7 +93,7 @@ def rnn_lm_backward(
         if learn_positions: 
             P[i] = P[i] - lr * dtanh
 
-        # Propogate to previus step
+        # This Propogate errors to previus step
         dh_next = W_h.T @ dtanh
 
 
