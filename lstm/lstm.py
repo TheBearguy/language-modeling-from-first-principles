@@ -7,10 +7,17 @@ def softmax(x):
     ex = np.exp(x - np.max(x))
     return ex / np.sum(ex)
 
+def one_hot(index, vocab_size): 
+    vec = np.zeros((vocab_size, 1))
+    vec[index] = 1
+
+    return vec
+
 class LSTMCell:
-    def __init__(self, input_size, hidden_size): 
+    def __init__(self, input_size, hidden_size, output_size): 
         self.input_size = input_size
         self.hidden_size = hidden_size
+        self.output_size = output_size
 
         # combined input size
         z_size = input_size + hidden_size
@@ -41,6 +48,10 @@ class LSTMCell:
         self.Wo = np.random.randn(hidden_size, z_size) * 0.1
         self.bo = np.zeros((hidden_size, 1))
 
+        # prediction 
+        self.Wy = np.random.randn(output_size, hidden_size) * 0.1
+        self.by = np.zeros((output_size, 1))
+
     
     def forward(self, xt, h_prev, c_prev): 
         """
@@ -70,23 +81,63 @@ class LSTMCell:
         # hidden state
         h_t = o_t * np.tanh(c_t)
 
-        return h_t, c_t
+        # Prediction
+        y_t = self.Wy @ h_t + self.by
+        pt = softmax(y_t) # Probabilities
+
+        return h_t, c_t, y_t, pt
     
 
 if __name__ == "__main__": 
-    input_size = 3
-    hidden_size = 5
+    text = "hello"
+    vocab = sorted(list(set(text)))
+    vocab_size = len(vocab)
 
-    lstm = LSTMCell(input_size, hidden_size)
+    char_to_idx = {c:i for i, c in enumerate(vocab)}
+    idx_to_char = {i:c for i, c in enumerate(vocab)}
 
-    xt = np.random.randn(input_size, 1)
+    print("Vocabulary:", vocab)
+    print("Char to idx:", char_to_idx)
+
+    input_size = vocab_size
+    hidden_size = 8
+    output_size = vocab_size
+
+    lstm = LSTMCell(input_size, hidden_size, output_size)
+    
+    # Example training pair
+    # h -> e
+
+    input_char = 'h'
+    target_char = 'e'
+
+    input_idx = char_to_idx[input_char]
+    target_idx = char_to_idx[target_char]
+
+    # one hot input char
+    xt = one_hot(input_idx, vocab_size)
+    # xt = np.random.randn(input_size, 1)
     h_prev = np.zeros((hidden_size, 1))
     c_prev = np.zeros((hidden_size, 1))
 
-    h_t, c_t = lstm.forward(xt, h_prev, c_prev)
+    h_t, c_t, y_t, pt = lstm.forward(xt, h_prev, c_prev)
 
-    print("Hidden state:")
-    print(h_t)
+    # Cross Entropy loss
+    loss = -np.log(pt[target_idx, 0])
 
-    print("\nCell state:")
-    print(c_t)
+    print("\nInput character:")
+    print(input_char)
+
+    print("\nTarget character:")
+    print(target_char)
+
+    print("\nPredicted probabilities:")
+
+    for i in range(vocab_size): 
+        ch = idx_to_char[i]
+        prob = pt[i, 0]
+
+        print(f"{ch}: {prob:.4f}")
+    
+    print("\nLoss:")
+    print(loss)
