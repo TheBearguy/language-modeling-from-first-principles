@@ -88,13 +88,20 @@ class LSTMCell:
         return h_t, c_t, y_t, pt
     
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
+
     text = "hello"
+
     vocab = sorted(list(set(text)))
     vocab_size = len(vocab)
 
-    char_to_idx = {c:i for i, c in enumerate(vocab)}
-    idx_to_char = {i:c for i, c in enumerate(vocab)}
+    char_to_idx = {
+        c: i for i, c in enumerate(vocab)
+    }
+
+    idx_to_char = {
+        i: c for i, c in enumerate(vocab)
+    }
 
     print("Vocabulary:", vocab)
     print("Char to idx:", char_to_idx)
@@ -103,41 +110,52 @@ if __name__ == "__main__":
     hidden_size = 8
     output_size = vocab_size
 
-    lstm = LSTMCell(input_size, hidden_size, output_size)
-    
-    # Example training pair
-    # h -> e
+    lstm = LSTMCell(
+        input_size,
+        hidden_size,
+        output_size
+    )
 
-    input_char = 'h'
-    target_char = 'e'
+    # Initial hidden + cell states
+    h = np.zeros((hidden_size, 1))
+    c = np.zeros((hidden_size, 1))
 
-    input_idx = char_to_idx[input_char]
-    target_idx = char_to_idx[target_char]
+    total_loss = 0
 
-    # one hot input char
-    xt = one_hot(input_idx, vocab_size)
-    # xt = np.random.randn(input_size, 1)
-    h_prev = np.zeros((hidden_size, 1))
-    c_prev = np.zeros((hidden_size, 1))
+    print("\nSequence Processing:\n")
 
-    h_t, c_t, y_t, pt = lstm.forward(xt, h_prev, c_prev)
+    for i in range(len(text) - 1):
 
-    # Cross Entropy loss
-    loss = -np.log(pt[target_idx, 0])
+        input_char = text[i]
+        target_char = text[i + 1]
 
-    print("\nInput character:")
-    print(input_char)
+        input_idx = char_to_idx[input_char]
+        target_idx = char_to_idx[target_char]
 
-    print("\nTarget character:")
-    print(target_char)
+        xt = one_hot(input_idx, vocab_size)
 
-    print("\nPredicted probabilities:")
+        # Forward pass
+        h, c, y_t, pt = lstm.forward(xt, h, c)
 
-    for i in range(vocab_size): 
-        ch = idx_to_char[i]
-        prob = pt[i, 0]
+        # Cross entropy loss
+        loss = -np.log(pt[target_idx, 0])
 
-        print(f"{ch}: {prob:.4f}")
-    
-    print("\nLoss:")
-    print(loss)
+        total_loss += loss
+
+        print(f"Input:  {input_char}")
+        print(f"Target: {target_char}")
+
+        print("Probabilities:")
+
+        for j in range(vocab_size):
+
+            ch = idx_to_char[j]
+            prob = pt[j, 0]
+
+            print(f"  {ch}: {prob:.4f}")
+
+        print(f"Loss: {loss:.4f}")
+        print("-" * 30)
+
+    print("\nTotal Loss:")
+    print(total_loss)
